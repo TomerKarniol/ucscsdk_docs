@@ -15,7 +15,7 @@ correction found so far.
 - [x] `docs/internals/request-lifecycle.md` (read trace + write trace, `file.py:NN` refs)
 
 ## Phase 2 — Metadata system
-- [ ] `docs/internals/metadata-system.md`
+- [x] `docs/internals/metadata-system.md`
 
 ## Phase 3 — Generated reference
 - [ ] `docs/_tools/gen_reference.py` (stdlib only, offline, deterministic)

@@ -205,3 +205,75 @@ do not.
   entity`), but internal entity expansion *is* performed → billion-laughs-shaped DoS from a
   hostile server. Combined with the above, a MITM is that hostile server. Do not overstate
   this as XXE — file disclosure does not work; tested.
+
+---
+
+## Phase 2 — 2026-08-16
+
+Wrote `internals/metadata-system.md`. 109 line refs machine-checked; every runnable snippet
+executed under `/usr/bin/python3`.
+
+### Metadata shapes (positional args — the generated files use positional form)
+
+```
+MoMeta(name, xml_attribute, rn, version, inp_out, mask,
+       field_names, access, parents, children, verbs)
+MoPropertyMeta(name, xml_attribute, field_type, version, access, mask,
+               min_length, max_length, pattern, value_set, range_val)
+MethodMeta(name, xml_attribute, version)
+MethodPropertyMeta(name, xml_attribute, field_type, version, inp_out, is_complex_type)
+```
+
+**Naming trap**: `MoMeta.access` is the RBAC **privilege list** (`["admin","ls-config",…]`).
+The read/write nature is `MoMeta.inp_out` (`InputOutput` / `OutputOnly`). `ClassIdMeta`
+swaps them into sane names (`ucsccoreutils.py:518-519`).
+
+Access levels (`ucsccoremeta.py:301`): NAMING 0, CREATE_ONLY 1, READ_ONLY 2, READ_WRITE 3,
+INTERNAL 4.
+
+### Measured statistics (recompute rather than trust if the package changes)
+
+- 1,831 MOs, **24,998 properties** total.
+- Access split: READ_ONLY 15,698 (62.8%) · READ_WRITE 4,882 (19.5%) · INTERNAL 3,086 ·
+  NAMING 1,216 · CREATE_ONLY 116. **Only ~1 property in 5 is writable.**
+- RN: 806 classes have a **static** RN (no `[prop]`); 1,025 are templated.
+  Naming-prop counts: 0→806, 1→887, 2→92, 3→42, 4→2, 5→1, 6→1.
+- `inp_out`: InputOutput 1,448 · OutputOnly 383. 103 classes have no declared parent.
+- Field types: string 19,837 · uint 2,065 · ulong 2,005 · byte 367 · float 356 ·
+  ushort 289 · int 76 · sbyte 1.
+- `verbs` is dirty data: 738 `None` entries plus lowercase duplicates (`get` 64, `set` 27,
+  `add` 14, `remove` 14) alongside `Get` 1,029 / `Set` 520 / `Add` 327 / `Remove` 306.
+
+### More verified bugs (add to the Phase 1 list)
+
+- **`MethodPropertyMeta.name` is infinitely recursive** (`ucsccoremeta.py:562-565`): the
+  getter returns `self.name`, not `self.__name`. Accessing it raises `RecursionError`.
+  Every other getter on that class is fine. Phase 3's generator must read
+  `prop_meta` keys / `xml_attribute` and must never touch `.name` on a `MethodPropertyMeta`.
+- **`validate_property_value` short-circuits** (`ucsccoremeta.py:363-377`): a satisfied
+  `min_length` (or `max_length`, or `range_val`) returns `True` immediately, so `pattern`
+  and `value_set` are never evaluated. Verified: a meta with `min_length=1` and
+  `pattern=^[a-z]+$` accepts `"123!!"`. Client-side validation is weaker than the metadata
+  suggests — say so in the guides, do not present it as a guarantee.
+- `MoPropertyRestriction.range_roc` / `.value_set_roc` are always `None` (`:256-257`).
+- **`UcscVersion` is unhashable** — `__eq__` without `__hash__` (`:233`). `{v}` → TypeError.
+- `UcscVersion("garbage")` does **not** raise; all components stay `None` and it compares
+  less than everything real. `UcscVersion(None)` returns a half-built object whose
+  `.version` raises `AttributeError`.
+- `UcscVersion` silently **rewrites** interim versions (`:146-154`): `2.0(1.5)` → mr `2`,
+  patch `a`; a missing patch becomes `'z'`.
+- `validate_property_value` calls `len(input_value)` → `TypeError` on int input.
+
+### Facts for Phase 3 (the generator)
+
+- Subpackage rule is exactly: leading lowercase run of the camelCase class id
+  (`ucsccoreutils.py:144`). `LsServer` → `lsServer` → `ls` → `mometa/ls/LsServer.py`.
+- `load_class` is case-sensitive; `word_u` only uppercases the first char, so `"lsserver"`
+  → `"Lsserver"` → miss. Normalise via `find_class_id_in_mo_meta_ignore_case`.
+- Generated MO module layout: `<Class>Consts` class, then `mo_meta = MoMeta(...)`, then
+  `prop_meta = {...}`, then `prop_map = {xmlName: python_name}`, then
+  `def __init__(self, parent_mo_or_dn, <naming props...>, **kwargs)`.
+- `<Class>Consts` attribute convention is `<PROPERTY>_<VALUE>` upper-snake; values equal the
+  property's `value_set`.
+- `GenericMo` keeps the class id in **wire case** (`lsServer`); `ManagedObject.get_class_id()`
+  returns Python case (`LsServer`). Do not mix them as dict keys.
