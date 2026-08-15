@@ -10,9 +10,9 @@ correction found so far.
 - [x] `docs/_work/NOTES.md`
 
 ## Phase 1 — Core architecture
-- [ ] Read all 19 core modules end to end
-- [ ] `docs/internals/architecture.md`
-- [ ] `docs/internals/request-lifecycle.md` (read trace + write trace, `file.py:NN` refs)
+- [x] Read all 19 core modules end to end
+- [x] `docs/internals/architecture.md`
+- [x] `docs/internals/request-lifecycle.md` (read trace + write trace, `file.py:NN` refs)
 
 ## Phase 2 — Metadata system
 - [ ] `docs/internals/metadata-system.md`

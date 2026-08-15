@@ -134,3 +134,74 @@ enough and correctness here matters more than context economy.
 ### Deliverables written this phase
 
 `docs/_work/INVENTORY.md`, `docs/_work/PROGRESS.md`, `docs/_work/NOTES.md`. No prose docs.
+
+---
+
+## Phase 1 — 2026-08-16
+
+Read all 19 core modules. Wrote `internals/architecture.md` and
+`internals/request-lifecycle.md`. All 86 `file.py:NN` refs machine-checked in-bounds and
+spot-checked by content.
+
+### Verified bugs in the SDK (documented, not fixed)
+
+Confirmed by running code under `/usr/bin/python3` 3.12.3:
+
+| Symbol | State | Cause |
+|---|---|---|
+| `ucsccoreutils.load_mo` (`:157`) | broken 3.11+ | `inspect.getargspec` removed |
+| `GenericMo.to_mo` (`ucscmo.py:649`) | broken 3.11+ | same, via `__get_mo_obj` `:621` |
+| `ManagedObject.show_tree` (`ucscmo.py:411`) | broken always | uses `self.children`; attr is `child` |
+| `ucsccoreutils.write_mo_tree` (`:325`) | broken always | uses `mo.class_id`; accessor is `get_class_id()` |
+| `extract_mo_tree_from_config_method_response` (`:401`) | broken always | calls `write_mo_tree` |
+| `is_local_download_supported` (`ucschandle.py:811`) | broken 3.13+ | `distutils` removed |
+| `TLS1Connection.connect` (`ucscdriver.py:112`) | broken 3.12+ | `ssl.wrap_socket` removed |
+
+`get_ucsc_obj` branches on `sys.version_info` and uses `getfullargspec` — the same fix was
+never applied to `load_mo`/`__get_mo_obj`. That is why response parsing works but those two
+do not.
+
+### Wrong docstrings in the SDK (do not copy into docs)
+
+- `ucschandle.py:44` — `port=100` example. `__create_uri` (`ucscsession.py:117`) raises
+  `UcscLoginError` for any port but 443, **at construction**.
+- `ucschandle.py:332-337` — four calls to `handle.lookup_by_dn`, which exists nowhere in
+  the source. A `ucsmsdk`-ism. The method is `query_dn`.
+- `ucsccoreutils.py:447-448` — `print_mo_hierarchy` example shows `write_mo_tree`.
+- `ucscfilter.py:172` — `generate_infilter` example has unbalanced quotes, will not parse.
+- `ucscsession.py:342-347` — `file_upload` example says `source_dir`; the param is `file_dir`.
+  `file_download`'s docstring says `dest_dir` for the same reason.
+
+### Semantics worth not re-deriving
+
+- **All 122 factory functions** call `to_xml(option=WriteXmlOption.DIRTY)`. Only set
+  properties are serialized. `WriteXmlOption` = ALL 0 / ALL_CONFIG 1 / DIRTY 2.
+- `to_xml_str` returns **bytes** on Python 3 (`ET.tostring`).
+- `extract_molist_from_method_response(resp, True)` **destroys the tree** while flattening
+  (`child_remove` at `:314`). For an intact tree use `need_response=True`.
+- `commit()` on error **discards the buffer** (`ucschandle.py:715`) then raises. On success
+  it also discards (`:739`). A committed buffer is always empty.
+- `commit()` on an empty buffer returns `None` silently (`:691`) — forgetting `add_mo` is
+  not an error.
+- Commit buffer is keyed by **DN**; staging the same DN twice keeps only the last object.
+- `tx_lock` (`ucscsession.py:25`) is **module-level** — serializes every request across all
+  handles in the process. Threading mode separates commit *buffers*, not the wire.
+- `error_code` is int `0` by default but a **string** off the wire. `!= 0` works; `== 0` on
+  a real response does not.
+- Filter default type is **`re` (WcardFilter)**, not `eq` (`ucscfilter.py:51`). Default flag
+  `C`; `flag="I"` rewrites letters to `[Aa]` classes.
+- The `filter_str` mini-language exposes only eq/ne/ge/gt/le/lt/re (`ucscfilter.py:24-31`).
+  `BwFilter`, `AnybitFilter`, `AllbitsFilter` are reachable **only** via
+  `create_basic_filter`, whose kwargs are snake_case (`first_value`, `second_value`).
+- `load_class` is **case-sensitive** — `load_class('lsserver')` returns `None`. Resolve with
+  `find_class_id_in_mo_meta_ignore_case` first.
+- Unknown props survive round-trips via `__xtra_props` (`ucscmo.py:155`, `:339`).
+
+### Security facts (verified, belong in the guides too)
+
+- **TLS is not verified.** `ucscdriver.py:83` builds `SSLContext(PROTOCOL_SSLv23)` with no
+  CA bundle; `verify_mode=CERT_NONE`, `check_hostname=False`. No SDK option changes this.
+- **XML parsing**: external entities are blocked by stdlib ET (`ParseError: undefined
+  entity`), but internal entity expansion *is* performed → billion-laughs-shaped DoS from a
+  hostile server. Combined with the above, a MITM is that hostile server. Do not overstate
+  this as XXE — file disclosure does not work; tested.
