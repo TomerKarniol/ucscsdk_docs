@@ -51,13 +51,13 @@ correction found so far.
 - [x] `docs/_work/VERIFICATION.md`
 
 ## Phase 6 — Agent layer
-- [ ] `docs/llms.txt`
-- [ ] `docs/agents/AGENTS.md` (10 recipes, DN table, top-50 MOs, do-not-do list)
-- [ ] `docs/CLAUDE.md`
-- [ ] `docs/README.md`
+- [x] `docs/llms.txt`
+- [x] `docs/agents/AGENTS.md` (10 recipes, DN table, top-50 MOs, do-not-do list)
+- [x] `docs/CLAUDE.md`
+- [x] `docs/README.md`
 
 ## Invariants (check every phase)
-- [ ] Nothing written outside `docs/`
-- [ ] SDK source under `ucscsdk/` never modified (`git status` shows it untracked, unchanged)
-- [ ] No commits made
-- [ ] Every unexecutable example carries `> Not executed against live hardware.`
+- [x] Nothing written outside `docs/`
+- [x] SDK source under `ucscsdk/` never modified (`git status` shows it untracked, unchanged)
+- [x] ~~No commits made~~ — user asked for a commit+push per phase
+- [x] Every unexecutable example carries `> Not executed against live hardware.`

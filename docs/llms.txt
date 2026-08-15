@@ -1,0 +1,66 @@
+# ucscsdk
+
+> Documentation for `ucscsdk` 0.9.0.10, the Cisco **UCS Central** Python SDK (Apache-2.0).
+> An XML-over-HTTPS client: Python `ManagedObject`s serialize to XML method calls, POST to
+> UCS Central, and responses parse back into objects. Everything hangs off the Management
+> Information Tree (MIT), where each object has a DN (full path) and an RN (name relative
+> to its parent, templated from naming properties, e.g. `ls-[name]`).
+>
+> This is **not** UCS Manager. That is the separate `ucsmsdk` package, with a different API
+> and a different class set. Examples do not transfer between them.
+>
+> Every symbol in these docs is verified to exist in the package by
+> `docs/_tools/verify_docs.py` (12,877 checks, 0 failures). No live UCS Central was
+> available; examples needing a server are marked, and none claim to have been run against
+> hardware.
+
+## Start here
+
+- [README](README.md): Router. Humans go to the guides; agents read this file and AGENTS.md.
+- [agents/AGENTS.md](agents/AGENTS.md): Dense operating manual for writing ucscsdk code — 10 canonical recipes (connect, query, create, modify, delete, transaction, wait for event, backup, register domain), the DN pattern table, the top-50 classes, and an explicit do-not-do list covering ucsmsdk confusion, guessed DNs, missing commits, and the seven SDK functions that are broken on modern Python.
+
+## Guides (prose, for humans)
+
+- [guides/01-getting-started.md](guides/01-getting-started.md): Install, connect, first query, first create. Where to find a class among the 1,831.
+- [guides/02-information-model.md](guides/02-information-model.md): MIT, DN, RN, naming properties, how to derive a DN from metadata instead of guessing it, well-known DNs.
+- [guides/03-connecting-and-auth.md](guides/03-connecting-and-auth.md): UcscHandle construction, login/logout, session properties, auto-refresh, proxy, get_auth_token, and the fact that TLS certificates are not verified.
+- [guides/04-querying.md](guides/04-querying.md): All five query methods with exact signatures, hierarchy= and need_response= semantics, and which methods actually accept a filter (only two).
+- [guides/05-filters.md](guides/05-filters.md): The filter_str mini-language documented from the grammar — precedence, quoting, flag="I", the default type being a wildcard rather than equality, and the three filter classes unreachable from the string syntax.
+- [guides/06-create-modify-delete.md](guides/06-create-modify-delete.md): The commit buffer, modify_present upserts, subtree creation, buffer-keyed-by-DN, and the fact that a failed commit discards your staged work.
+- [guides/07-transactions-and-threading.md](guides/07-transactions-and-threading.md): tag= for independent transactions, threading mode's per-thread buffers, and why threads do not make requests parallel.
+- [guides/08-events-and-wait-for-event.md](guides/08-events-and-wait-for-event.md): wait_for_event, event channel vs polling, the UcscEventHandle API, and why a None mo makes the call return instantly.
+- [guides/09-error-handling.md](guides/09-error-handling.md): The two unrelated exception roots, what each carries, the plain builtins the SDK also raises, and the seven silent failure modes that produce no exception at all.
+- [guides/10-backup-export-import.md](guides/10-backup-export-import.md): full-state backup vs config export, local/remote/domain variants, merge vs replace on import, scheduled backup policies.
+- [guides/11-domain-management.md](guides/11-domain-management.md): Registering and unregistering UCS domains, domain groups, and the two incompatible group-path notations.
+- [guides/12-firmware.md](guides/12-firmware.md): Listing bundles, importing local/remote, downloading from Cisco.com, scheduling infrastructure updates, catalogue sync.
+- [guides/13-tech-support.md](guides/13-tech-support.md): Collecting UCS Central and UCS domain tech support bundles, the per-option kwargs table, and why domain bundles cannot be downloaded through UCS Central.
+- [guides/14-xml-to-python.md](guides/14-xml-to-python.md): converttopython — turning captured GUI XML into SDK code, with real generated output.
+- [guides/15-advanced.md](guides/15-advanced.md): Calling any of the 122 XML methods directly, hand-built filters, dme=, dump_xml, GenericMo for unknown classes, and the list of SDK functions that do not work on modern Python.
+
+## Reference (generated, exhaustive)
+
+- [reference/mo/index.md](reference/mo/index.md): Index of all 94 managed-object packages with class counts.
+- [reference/mo/](reference/mo/): One page per package — every class with its wire name, RN template, naming properties, parents, children, verbs, privileges, every property (XML name, type, access, version, restrictions) and its `<Class>Consts` values. 1,831 classes, 24,998 properties.
+- [reference/methods.md](reference/methods.md): All 122 XML methods — builder signature from ucscmethodfactory, XML element name, and every input/output property with type and direction.
+
+## Machine-readable indexes
+
+- [agents/mo-index.json](agents/mo-index.json): Routing index, ~537K, loadable whole. Per class: package, wire name, rn, naming props, parents, property counts. Also a package→classes map.
+- [agents/mo-details.jsonl](agents/mo-details.jsonl): One JSON object per LINE, keyed by class_id. `grep '"class_id": "LsServer"' ` returns the complete record — every property with restrictions plus all `<Class>Consts` values — in a single hit.
+- [agents/api-index.json](agents/api-index.json): UcscHandle's public surface with signatures and summaries, all 122 methods with I/O contracts, the 26 basetypes, the 7 exception classes, the 13 filter classes, and the filter_str type→class mapping.
+
+## Internals (how it works)
+
+- [internals/architecture.md](internals/architecture.md): The layer cake from UcscHandle down to the HTTP driver, the MIT, the commit buffer, threading, forward compatibility via GenericMo, the security posture, and a table of every SDK symbol broken by a modern Python version.
+- [internals/request-lifecycle.md](internals/request-lifecycle.md): Both paths traced end to end with real generated XML — query_dn through config_resolve_dn, the codec, the driver, get_ucsc_obj and back; then add_mo through the commit buffer to ConfigConfMos.
+- [internals/metadata-system.md](internals/metadata-system.md): MoMeta, MoPropertyMeta, restrictions, access levels, the dirty mask, VersionMeta, the global registry, dynamic class loading, and GenericMo. Read this to reason about a class you have never seen.
+
+## Tooling and provenance
+
+- [_tools/gen_reference.py](_tools/gen_reference.py): Regenerates the whole reference and both agent indexes by introspection. Stdlib only, offline, deterministic — reruns are byte-identical.
+- [_tools/verify_docs.py](_tools/verify_docs.py): The gate. Resolves every code block, import, symbol, class id, property, signature, link and file:line reference in docs/ against the installed package. Run it after any edit.
+- [_tools/nose_shim.py](_tools/nose_shim.py): In-memory nose replacement that lets the SDK's offline unit tests execute at all. Touches nothing on disk.
+- [_work/VERIFICATION.md](_work/VERIFICATION.md): Verbatim output of the gate, its own self-test against planted defects, generator determinism proof, and the honest result of running the SDK's test suite.
+- [_work/UG-RST-AUDIT.md](_work/UG-RST-AUDIT.md): Where the shipped `docs/ucscsdk_ug.rst` is wrong — three nonexistent APIs, two wrong call signatures, five broken code blocks — and which new guide corrects each.
+- [_work/INVENTORY.md](_work/INVENTORY.md): Every module with LOC, public symbols and purpose.
+- [_work/NOTES.md](_work/NOTES.md): Verified findings accumulated across all phases, including every SDK defect discovered.

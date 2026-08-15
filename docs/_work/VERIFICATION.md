@@ -1,6 +1,6 @@
 # Verification
 
-Run date: 2026-08-16. Interpreter: `/usr/bin/python3` (CPython 3.12.3).
+Run date: 2026-08-16 (final, after Phase 6). Interpreter: `/usr/bin/python3` (CPython 3.12.3).
 Package under test: `ucscsdk` 0.9.0.10 at `ucscsdk/ucscsdk/`, imported via `sys.path`.
 No live UCS Central was available; nothing here was executed against hardware.
 
@@ -10,18 +10,18 @@ No live UCS Central was available; nothing here was executed against hardware.
 
 ```
 $ /usr/bin/python3 docs/_tools/verify_docs.py
-verifying 120 markdown files under docs
+verifying 123 markdown files under docs
 
-syntax        3661 checked     0 failed  ok
-imports       3547 checked     0 failed  ok
-symbols       1979 checked     0 failed  ok
-classes       3346 checked     0 failed  ok
-props            6 checked     0 failed  ok
-signatures     154 checked     0 failed  ok
-links          133 checked     0 failed  ok
+syntax        3681 checked     0 failed  ok
+imports       3562 checked     0 failed  ok
+symbols       1988 checked     0 failed  ok
+classes       3347 checked     0 failed  ok
+props            7 checked     0 failed  ok
+signatures     155 checked     0 failed  ok
+links          175 checked     0 failed  ok
 linerefs        51 checked     0 failed  ok
 
-all 12877 checks passed
+all 12966 checks passed
 ```
 
 Exit status `0`.
@@ -248,7 +248,7 @@ PASS test_003_mixed_filter
 
 | Gate | Result |
 |---|---|
-| `verify_docs.py` | **pass** — 12,877 checks, 0 failures, exit 0 |
+| `verify_docs.py` | **pass** — 12,966 checks, 0 failures, exit 0 |
 | `verify_docs.py` self-test | **pass** — all 8 checks fire on planted defects |
 | `gen_reference.py` determinism | **pass** — byte-identical across runs |
 | Generated data vs live package | **pass** — 1831/1831 class ids, 200-MO deep sample |

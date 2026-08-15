@@ -431,7 +431,7 @@ Self-test file deleted afterwards.
    drops ```` ``` ```` fences but **keeps** ```` ```python ```` ones — so linerefs inside
    real examples stay verified.
 
-Three placeholder strings in VERIFICATION.md prose (`ucscsdk.a.b.C`, `Class.prop_meta`,
+Three placeholder strings in VERIFICATION.md prose (a dotted `ucscsdk.…` placeholder, `<Cls>.prop_meta`,
 and a literal `lookup_by_dn` path) were **reworded**, not allowlisted. `SYMBOL_ALLOW` has
 exactly one entry. Keep it that way — if the gate fires on prose, fix the prose.
 
@@ -462,3 +462,58 @@ Two bugs in my own shim, found and fixed before trusting any number:
 - Missing `with_setup` broke collection of 3 modules.
 Lesson: a shim that produces failures is not evidence about the code under test until the
 shim itself is verified.
+
+---
+
+## Phase 6 — 2026-08-16 — COMPLETE
+
+Wrote `docs/llms.txt`, `docs/agents/AGENTS.md`, `docs/CLAUDE.md`, `docs/README.md`.
+
+**Final gate: `all 12966 checks passed`, exit 0** across 123 markdown files.
+
+### Top-50 list was hand-curated, not scored
+
+A first attempt ranked classes by `n_writable * 2 + package bonus`. It surfaced
+`ClitestTypeTest`, `SyntheticFile`, `HcReport` and `BiosVfPCISlotOptionROMEnable` — high
+property counts, no operational relevance. Writable-property count is not usefulness.
+
+The shipped list is 57 hand-picked classes covering service profiles, boot, org/domain
+groups, network, vNICs, pools, compute, storage, identity, firmware and ops. **All 57 were
+verified present in `mo-index.json` before publishing** (0 missing). If you extend it,
+verify the same way — `verify_docs.py` does not check prose class-name mentions, only
+imports.
+
+### The gate fires on its own documents — twice more this phase
+
+`VERIFICATION.md` and `NOTES.md` both contained a dotted `ucscsdk.…` placeholder in prose
+describing the checker. Reworded, not allowlisted. Expect this whenever you write *about*
+the checker: any dotted path in prose is treated as a claim.
+
+### Project status: all six phases complete
+
+| Phase | Deliverable | State |
+|---|---|---|
+| 0 | INVENTORY / PROGRESS / NOTES | done |
+| 1 | internals/architecture.md, request-lifecycle.md | done |
+| 2 | internals/metadata-system.md | done |
+| 3 | gen_reference.py -> 94 pages + methods.md + 3 indexes | done |
+| 4 | 15 guides + UG-RST-AUDIT.md | done |
+| 5 | verify_docs.py + nose_shim.py + VERIFICATION.md | done, gate green |
+| 6 | llms.txt, AGENTS.md, CLAUDE.md, README.md | done |
+
+Invariants held throughout: nothing written outside `docs/`; SDK clone source unmodified
+(`git diff --stat HEAD -- ucscsdk/ tests/ docs/` inside the clone is empty).
+
+Deviation from the original plan, at the user's request: each phase was committed and
+pushed to `origin/main` rather than left uncommitted, and commits carry only the user's
+authorship (no co-author trailer).
+
+### If you pick this up later
+
+- Re-run both tools first; they are the source of truth:
+  `/usr/bin/python3 docs/_tools/gen_reference.py && /usr/bin/python3 docs/_tools/verify_docs.py`
+- The reference and agent indexes are **generated**. Never hand-edit `reference/**` or
+  `agents/*.json*`.
+- Known gaps, deliberate: the 122 XML methods have generated contracts but no prose beyond
+  guide 15; `converttopython`'s interactive log-scraping mode is documented but could not be
+  exercised (needs a GUI log); no example has ever touched real hardware.
