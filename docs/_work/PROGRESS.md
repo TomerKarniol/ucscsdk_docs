@@ -43,12 +43,12 @@ correction found so far.
 - [x] `15-advanced.md` (`dump_xml`, `dme=`, parallel tx)
 
 ## Phase 5 — Verification (gate)
-- [ ] `docs/_tools/verify_docs.py` (stdlib only, offline)
-- [ ] `verify_docs.py` exits 0 — every doc symbol resolves
-- [ ] All internal doc links resolve
-- [ ] All `file.py:NN` references point at live lines
-- [ ] Repo test suite run, output captured verbatim
-- [ ] `docs/_work/VERIFICATION.md`
+- [x] `docs/_tools/verify_docs.py` (stdlib only, offline)
+- [x] `verify_docs.py` exits 0 — every doc symbol resolves
+- [x] All internal doc links resolve
+- [x] All `file.py:NN` references point at live lines
+- [x] Repo test suite run, output captured verbatim
+- [x] `docs/_work/VERIFICATION.md`
 
 ## Phase 6 — Agent layer
 - [ ] `docs/llms.txt`

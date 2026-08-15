@@ -399,3 +399,66 @@ Captured in the guides; the ones most likely to trip you up:
    blocks before link-checking, or it will report ~19 phantom failures.
 2. Illustrative fragments (bare `def` signatures, dict-entry excerpts) were made
    syntactically valid rather than weakening the AST gate. Keep it that way.
+
+---
+
+## Phase 5 — 2026-08-16
+
+Wrote `docs/_tools/verify_docs.py` (the gate) and `docs/_tools/nose_shim.py`.
+Result captured in `docs/_work/VERIFICATION.md`.
+
+**Final: `all 12877 checks passed`, exit 0.** Re-run after any doc edit:
+
+```
+/usr/bin/python3 docs/_tools/verify_docs.py
+```
+
+### The gate was self-tested — keep doing this
+
+A first-run green is not evidence the checker works. A file with 8 planted defects was
+added; all 8 checks fired (14 failures). It caught the subtle one: importing `LsServer`
+from package `compute` instead of `ls` resolves as a dotted path but is a real doc error.
+Self-test file deleted afterwards.
+
+### Two false-positive classes — fixed by narrowing scope, NOT by allowlisting
+
+1. **Inline code spans break link checking.** Generated reference tables embed property
+   regexes; `[...](...)` inside a code span reads as a markdown link → ~19 phantom
+   failures. `strip_code()` removes fenced blocks + inline spans before link checks.
+2. **Unlabelled fences hold pasted terminal output.** `VERIFICATION.md` quotes the
+   checker's own failure messages, which name deliberately-nonexistent symbols. The
+   `symbols`/`classes`/`props`/`linerefs` checks now call `strip_output_blocks()`, which
+   drops ```` ``` ```` fences but **keeps** ```` ```python ```` ones — so linerefs inside
+   real examples stay verified.
+
+Three placeholder strings in VERIFICATION.md prose (`ucscsdk.a.b.C`, `Class.prop_meta`,
+and a literal `lookup_by_dn` path) were **reworded**, not allowlisted. `SYMBOL_ALLOW` has
+exactly one entry. Keep it that way — if the gate fires on prose, fix the prose.
+
+Note the checker fires on its own document when you add prose citing a fake symbol. That
+happened twice while writing VERIFICATION.md. Working as intended.
+
+### The SDK test suite: honest result
+
+- **As shipped**: `pytest tests -q` → `22 errors during collection`, all
+  `ModuleNotFoundError: No module named 'nose'`. Only `tests/test_ucscsdk.py` (an empty
+  stub) and `tests/convert_to_ucs` collect → `2 passed`. Effectively **one** real assertion.
+- **With `docs/_tools/nose_shim.py`** (fake nose in `sys.modules`, nothing on disk touched):
+  **34 passed, 3 failed** over the hardware-free modules.
+
+The 3 failures are **real and diagnosed**: the assertions compare exact XML byte strings
+with **alphabetically sorted attributes**. Python ≤3.7's `ET.tostring` sorted attributes;
+3.8+ preserves insertion order. Attribute order is not significant in XML, so this is a
+stale test fixture, not an SDK defect — but the suite cannot pass on any modern Python
+without being rewritten.
+
+Do **not** run the whole suite unshielded: modules importing `tests/connection/info.py`
+call `custom_setup()` → real login to 192.168.1.1 → hangs until timeout. Restrict to the
+hardware-free list (command is in VERIFICATION.md §3).
+
+Two bugs in my own shim, found and fixed before trusting any number:
+- nose exposes unittest asserts snake_cased (`assert_equal` → `assertEqual`). Looking up
+  the snake name on `TestCase` gave 24 spurious `AttributeError` failures.
+- Missing `with_setup` broke collection of 3 modules.
+Lesson: a shim that produces failures is not evidence about the code under test until the
+shim itself is verified.
