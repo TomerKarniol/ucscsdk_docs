@@ -277,3 +277,57 @@ INTERNAL 4.
   property's `value_set`.
 - `GenericMo` keeps the class id in **wire case** (`lsServer`); `ManagedObject.get_class_id()`
   returns Python case (`LsServer`). Do not mix them as dict keys.
+
+---
+
+## Phase 3 — 2026-08-16
+
+Wrote `docs/_tools/gen_reference.py` (stdlib only, offline, deterministic). Run it with:
+
+```
+/usr/bin/python3 docs/_tools/gen_reference.py
+```
+
+Output (all generated — never hand-edit):
+- `reference/mo/<package>.md` × 94 + `reference/mo/index.md`
+- `reference/methods.md` — 122 sections, 122 summary rows
+- `agents/mo-index.json` (537K, routing/summary — loadable whole)
+- `agents/mo-details.jsonl` (25M, **one JSON object per line**, full record)
+- `agents/api-index.json` (196K — handle surface, methods, basetypes, exceptions, filters)
+
+Counts emitted: 1831 MOs / 94 packages / 122 methods / 24,998 props. Matches Phase 0 and
+Phase 2 exactly.
+
+### Determinism verified
+
+Two consecutive runs give byte-identical output (md5 of md5s of every generated file).
+Achieved by sorting every mapping and writing nothing timestamped.
+
+### Two problems solved while building it — do not reintroduce
+
+1. **Acronym runs break naive snake-casing.** `re.sub(r"(?<!^)(?=[A-Z])","_",cid).lower()`
+   maps `AaaGetKVMLaunchUrlInternal` → `aaa_get_k_v_m_...`, but the real function is
+   `aaa_get_kvm_launch_url_internal`. Five methods were affected: `AaaGetKVMLaunchUrlInternal`,
+   `ConfigResolveClassDB`, `ConfigUCEstimateImpact`, `SyntheticFSObjInventory`,
+   `SyntheticFSObjInventoryB`. Fix: match on the **underscore-free lowercase** form
+   (`cid.lower()` vs `fn.replace("_","")`), exact for all 122.
+2. **A single 29MB pretty-printed JSON is neither loadable nor greppable.** Split into a
+   537K routing index plus JSONL. `grep '"class_id": "LsServer"' mo-details.jsonl` now
+   returns the complete record on one line.
+
+### Generator gotcha
+
+`MethodPropertyMeta.name` raises `RecursionError` (see Phase 2). The generator uses the
+`prop_meta` dict key as the python name and never touches `.name`. Keep it that way.
+
+### Correctness cross-check (ran after generating)
+
+- class-id set in JSONL == `MO_CLASS_META` keys, exactly (1831).
+- 200 randomly sampled MOs: `rn`, `xml`, `access`/`inp_out`, `parents`, `module`, and the
+  full property-name set all match the live classes; per-property `xml`/`type` match too.
+- Documented module path == `ucscsdk.mometa.<pkg>.<Class>` for every sample, and 40 random
+  documented imports actually import.
+- method set == `METHOD_CLASS_ID` (122), every one has a resolved builder function.
+- 23 public `UcscHandle` members indexed.
+
+Sizes: `reference/` 21M, `agents/` 25.7M. Large but generated; the script is the artifact.

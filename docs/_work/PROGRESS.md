@@ -18,12 +18,12 @@ correction found so far.
 - [x] `docs/internals/metadata-system.md`
 
 ## Phase 3 — Generated reference
-- [ ] `docs/_tools/gen_reference.py` (stdlib only, offline, deterministic)
-- [ ] `docs/reference/mo/<package>.md` × 94
-- [ ] `docs/reference/methods.md`
-- [ ] `docs/agents/mo-index.json`
-- [ ] `docs/agents/api-index.json`
-- [ ] Re-run produces byte-identical output
+- [x] `docs/_tools/gen_reference.py` (stdlib only, offline, deterministic)
+- [x] `docs/reference/mo/<package>.md` × 94 (+ index.md)
+- [x] `docs/reference/methods.md`
+- [x] `docs/agents/mo-index.json` (+ `mo-details.jsonl`)
+- [x] `docs/agents/api-index.json`
+- [x] Re-run produces byte-identical output
 
 ## Phase 4 — Human guides (`docs/guides/`)
 - [ ] `01-getting-started.md`
