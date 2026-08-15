@@ -26,21 +26,21 @@ correction found so far.
 - [x] Re-run produces byte-identical output
 
 ## Phase 4 — Human guides (`docs/guides/`)
-- [ ] `01-getting-started.md`
-- [ ] `02-information-model.md` (MIT / DN / RN)
-- [ ] `03-connecting-and-auth.md` (`get_auth_token`, proxy, session refresh)
-- [ ] `04-querying.md` (all five query methods, `hierarchy=`, `need_response=`)
-- [ ] `05-filters.md` (`filter_str` grammar + all 13 `*Filter` classes)
-- [ ] `06-create-modify-delete.md` (commit buffer, `tag=`, `modify_present`, discard)
-- [ ] `07-transactions-and-threading.md`
-- [ ] `08-events-and-wait-for-event.md`
-- [ ] `09-error-handling.md`
-- [ ] `10-backup-export-import.md`
-- [ ] `11-domain-management.md`
-- [ ] `12-firmware.md`
-- [ ] `13-tech-support.md`
-- [ ] `14-xml-to-python.md` (`converttopython`)
-- [ ] `15-advanced.md` (`dump_xml`, `dme=`, parallel tx)
+- [x] `01-getting-started.md`
+- [x] `02-information-model.md` (MIT / DN / RN)
+- [x] `03-connecting-and-auth.md` (`get_auth_token`, proxy, session refresh)
+- [x] `04-querying.md` (all five query methods, `hierarchy=`, `need_response=`)
+- [x] `05-filters.md` (`filter_str` grammar + all 13 `*Filter` classes)
+- [x] `06-create-modify-delete.md` (commit buffer, `tag=`, `modify_present`, discard)
+- [x] `07-transactions-and-threading.md`
+- [x] `08-events-and-wait-for-event.md`
+- [x] `09-error-handling.md`
+- [x] `10-backup-export-import.md`
+- [x] `11-domain-management.md`
+- [x] `12-firmware.md`
+- [x] `13-tech-support.md`
+- [x] `14-xml-to-python.md` (`converttopython`)
+- [x] `15-advanced.md` (`dump_xml`, `dme=`, parallel tx)
 
 ## Phase 5 — Verification (gate)
 - [ ] `docs/_tools/verify_docs.py` (stdlib only, offline)

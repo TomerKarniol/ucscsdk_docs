@@ -331,3 +331,71 @@ Achieved by sorting every mapping and writing nothing timestamped.
 - 23 public `UcscHandle` members indexed.
 
 Sizes: `reference/` 21M, `agents/` 25.7M. Large but generated; the script is the artifact.
+
+---
+
+## Phase 4 — 2026-08-16
+
+Wrote all 15 guides in `docs/guides/`, plus `docs/_work/UG-RST-AUDIT.md` (the deferred
+`ucscsdk_ug.rst` audit, done in main context after two failed subagent attempts).
+
+All 3,661 ```python blocks across `docs/**` now `ast.parse` cleanly.
+
+### The old user guide is badly wrong — full list in UG-RST-AUDIT.md
+
+Headlines, all verified against source:
+- `delete_mo` (rst:324) and `commit_mo` (rst:327) **do not exist** — they are `remove_mo`
+  and `commit`.
+- `export_config` (rst:700) does not exist; the import raises `ImportError`.
+- rst:371 and rst:388 show `query_dn`/`query_classid` taking varargs for multiple
+  DNs/class ids. The real APIs are `query_dns(["a","b"])` / `query_classids(["a","b"])`.
+- rst:406 claims all four query methods accept filters. **Only `query_classid` and
+  `query_children` do.**
+- Five code blocks are syntactically broken (unbalanced parens at 676/708, literal `\n` at
+  736, dangling arg at 743, missing comma at 782).
+- Two Python-2 `print` statements (528, 643).
+
+### Utils signatures — verified, several differ from the old guide
+
+Captured in the guides; the ones most likely to trip you up:
+- `backup_domain_remote(handle, file_dir, file_name, domain_ip, protocol, hostname, ...)`
+  vs `export_config_domain_remote(handle, file_dir, file_name, domain_ip, hostname,
+  protocol, ...)` — **protocol/hostname are swapped**. Use kwargs.
+- `schedule_*` use **`file_path`**, not `file_dir`; `max_bkup_files` defaults to the
+  *string* `'2'`.
+- `sync_firmware_update_from_cisco(..., sync_frequencey='daily', ...)` — the typo is the
+  real parameter name.
+- Tech support options are `ucsm`, `ucsm-mgmt`, `chassis`, `rack-server`,
+  **`fabric-extender`** (not `fex`), `server-memory`. Required kwargs:
+  `chassis_id` / `rack_server_id` / `fex_id` / **`server_id_list`** (not
+  `server_memory_id`). Anything else → `UcscValidationException: Unrecognised option value`.
+- `get_cco_firmware_image(..., mdf_id_list=(284308174,), ...)` default covers UCS Central
+  only.
+
+### More verified facts added this phase
+
+- Filter test assertions from `tests/common/test_generate_filter.py` were run directly
+  (bypassing `nose`) and **all four still pass** — they are quoted in guide 05 as verified
+  examples. Precedence confirmed: `not` > `and` > `or`.
+- `converttopython.convert_to_ucs_python(xml=True, request=...)` was executed; guide 14
+  quotes its real output verbatim.
+- **Naming properties are immutable after construction** — `sp.name = "x"` raises
+  `ValueError: name is not a read-write property.` (access level NAMING is not READ_WRITE).
+  The `UcscValidationException` in `make_rn` only fires if you force past the setter.
+- `LsServer` has **52** children in its MoMeta (not 50 — recount if quoting).
+- `commit(tag=...)` on a never-used tag raises **`KeyError`**; the default buffer returns
+  `None` silently. Asymmetric.
+- `BwFilter` serializes its bounds as `first_value=` / `second_value=` — **snake_case XML
+  attributes**, unlike every other wire name. `AbstractFilter.to_xml` only special-cases
+  `class_` → `class`.
+- `print_mo_hierarchy` works (unlike `write_mo_tree`/`show_tree`) and prints the *metadata*
+  hierarchy for a class id.
+
+### Checker false positives to avoid in Phase 5
+
+1. **Do not flag "broken links" inside code spans.** Property regex patterns like
+   `` `^[A-Za-z]([A-Za-z0-9-]*[A-Za-z0-9])?$` `` in the generated reference tables look like
+   markdown links to a naive regex. `verify_docs.py` must strip inline code spans and fenced
+   blocks before link-checking, or it will report ~19 phantom failures.
+2. Illustrative fragments (bare `def` signatures, dict-entry excerpts) were made
+   syntactically valid rather than weakening the AST gate. Keep it that way.

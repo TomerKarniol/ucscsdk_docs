@@ -17,6 +17,7 @@
 
 ```python
 def query_dn(self, dn, hierarchy=False, need_response=False, dme="central-mgr"):
+    ...
 ```
 
 Guards on empty `dn` (`:342`, raises `ValueError`), then builds the method document:

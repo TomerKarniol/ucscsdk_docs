@@ -50,7 +50,7 @@ mo_meta = MoMeta(
     [],                               # field_names
     ["admin", "ls-compute", "ls-config", "ls-server"],   # access — PRIVILEGES
     ['computeTemplate', 'orgOrg'],    # parents       legal parent class ids
-    ['cimcvmediaMountConfigDef', ...],# children      legal child class ids
+    ['cimcvmediaMountConfigDef'],   # children      legal child class ids (52 total)
     ["Add", "Get", "Remove", "Set"],  # verbs         permitted operations
 )
 ```
@@ -120,6 +120,7 @@ Naming properties are **required positional arguments** on the generated `__init
 
 ```python
 def __init__(self, parent_mo_or_dn, name, **kwargs):   # mometa/ls/LsServer.py:389
+    ...
 ```
 
 One documented exception: `StorageLocalDiskPartition` has an RN that changed across UCS
@@ -141,17 +142,19 @@ The last five are folded into a `MoPropertyRestriction` (`:316`).
 Four real properties from `LsServer`:
 
 ```python
+prop_meta = {
 "name":       MoPropertyMeta("name", "name", "string", VersionMeta.Version101a,
                              MoPropertyMeta.NAMING, 0x10000,
-                             None, None, r"""[\-\.:_a-zA-Z0-9]{2,32}""", [], [])
+                             None, None, r"""[\-\.:_a-zA-Z0-9]{2,32}""", [], []),
 "usr_lbl":    MoPropertyMeta("usr_lbl", "usrLbl", "string", VersionMeta.Version101a,
                              MoPropertyMeta.READ_WRITE, 0x4000000,
-                             None, None, r"""[ !#$%&...]{0,32}""", [], [])
+                             None, None, r"""[ !#$%&...]{0,32}""", [], []),
 "oper_state": MoPropertyMeta("oper_state", "operState", "string", VersionMeta.Version111a,
                              MoPropertyMeta.READ_ONLY, None,
-                             None, None, None, ["ok", "config", ...], [])
+                             None, None, None, ["ok", "config", "..."], []),
 "dn":         MoPropertyMeta("dn", "dn", "string", VersionMeta.Version101a,
-                             MoPropertyMeta.READ_ONLY, 0x20, 0, 256, None, [], [])
+                             MoPropertyMeta.READ_ONLY, 0x20, 0, 256, None, [], []),
+}
 ```
 
 Note `usr_lbl` → `usrLbl`. **The Python name and the wire name differ for most properties.**
